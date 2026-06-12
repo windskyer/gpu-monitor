@@ -4,7 +4,7 @@ services:
     # 仅本机可访问,对外再经宿主 nginx 反代 + token
     network_mode: "host"
     build: .
-    image: gpu-monitor:latest
+    image: flftuu/gpu-monitor:latest
     container_name: gpu-monitor
     restart: unless-stopped
     # GPU 进程 PID 解析 + 宿主进程视图(NVML 返回的是宿主 PID)
