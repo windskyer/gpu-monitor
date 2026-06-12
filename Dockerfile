@@ -19,7 +19,7 @@ ENV CGO_ENABLED=1 \
 COPY go.mod go.sum vendor/ ./
 COPY . .
 # 用 Vite 产物替换占位 dist/
-COPY --from=frontend /web/dist ./internal/server/dist
+COPY --from=frontend /internal/server/dist ./internal/server/dist
 # go-nvml 编译期不需要 CUDA/驱动(nvml.h 已 vendored)，运行时 dlopen libnvidia-ml.so.1
 RUN go build -trimpath -ldflags="-s -w" -o /out/gpu-monitor ./cmd/monitor
 
