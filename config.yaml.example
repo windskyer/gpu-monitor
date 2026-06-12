@@ -1,0 +1,28 @@
+server:
+  listen: "0.0.0.0:8800"
+  token: "change-me"
+
+host:
+  mount_prefix: "/host/root"   # bare metal: ""  |  container: "/host/root"
+
+sample:
+  system:  1s
+  gpu:     1s
+  process: 2s
+  history: 180
+  top_n:   15
+
+telegram:
+  bot_token: ""
+  chat_id:   ""
+  report_interval: 1h
+
+alerts:
+  gpu_temp:    { threshold: 83,  cooldown: 10m }
+  gpu_mem_pct: { threshold: 95,  cooldown: 10m }
+  cpu_temp:    { threshold: 85,  cooldown: 10m }
+  mem_pct:     { threshold: 90,  cooldown: 10m }
+  disk_pct:    { threshold: 90,  cooldown: 30m }
+
+exporter:
+  prometheus: false
