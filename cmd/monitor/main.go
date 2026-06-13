@@ -85,7 +85,7 @@ func main() {
 			"🧠 内存: %.1f%% (%s/%s)\n"+
 			"💽 磁盘: %s\n"+
 			"🎮 GPU: %s",
-			cfg.Server.Listen, snap.CPU.UsagePct, snap.CPU.TempC,
+			cfg.Server.Domain, snap.CPU.UsagePct, snap.CPU.TempC,
 			snap.Memory.UsedPct, notify.FmtBytes(snap.Memory.UsedBytes), notify.FmtBytes(snap.Memory.TotalBytes),
 			diskStr, gpuInfo)
 		if err := tg.Send(msg); err != nil {
