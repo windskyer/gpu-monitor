@@ -94,10 +94,11 @@ func (s *Server) handleWS(w http.ResponseWriter, r *http.Request) {
 	}
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Printf("[server] ws upgrade: %v", err)
+		log.Printf("[ws] upgrade error from %s: %v", r.RemoteAddr, err)
 		return
 	}
 	s.hub.add(conn)
+	log.Printf("[ws] connected: %s", r.RemoteAddr)
 
 	// Send current snapshot immediately on connect
 	if latest := s.ring.Latest(); latest != nil {
@@ -111,6 +112,7 @@ func (s *Server) handleWS(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			conn.Close()
 			s.hub.remove(conn)
+			log.Printf("[ws] disconnected: %s", r.RemoteAddr)
 		}()
 		for {
 			if _, _, err := conn.ReadMessage(); err != nil {

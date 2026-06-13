@@ -4,9 +4,16 @@ import type { Snapshot } from '../types'
 export function useWS() {
   const snap      = ref<Snapshot | null>(null)
   const connected = ref(false)
-  let ws: WebSocket | null = null
-  let delay = 1000
+  let ws:    WebSocket | null = null
+  let timer: ReturnType<typeof setTimeout> | null = null
+  let delay  = 1000
   let stopped = false
+
+  function scheduleReconnect() {
+    if (stopped || timer !== null) return
+    timer = setTimeout(() => { timer = null; connect() }, delay)
+    delay = Math.min(delay * 2, 30_000)
+  }
 
   function connect() {
     if (stopped) return
@@ -24,16 +31,22 @@ export function useWS() {
       try { snap.value = JSON.parse(ev.data) as Snapshot }
       catch { /* ignore malformed frames */ }
     }
-    ws.onclose = ws.onerror = () => {
+    ws.onerror = () => {
+      // onerror always fires before onclose on failure; let onclose drive reconnect
+    }
+    ws.onclose = () => {
       connected.value = false
       ws = null
-      if (!stopped) setTimeout(connect, delay)
-      delay = Math.min(delay * 2, 30_000)
+      scheduleReconnect()
     }
   }
 
   onMounted(connect)
-  onUnmounted(() => { stopped = true; ws?.close() })
+  onUnmounted(() => {
+    stopped = true
+    if (timer !== null) { clearTimeout(timer); timer = null }
+    ws?.close()
+  })
 
   return { snap, connected }
 }

@@ -25,6 +25,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("load config: %v", err)
 	}
+	log.Printf("config loaded: listen=%s sample=%s mount_prefix=%q",
+		cfg.Server.Listen, cfg.Sample.System, cfg.Host.MountPrefix)
 
 	// GPU collector — non-fatal if no GPU or no driver present
 	var gpuColl *gpu.Collector
@@ -33,15 +35,16 @@ func main() {
 	} else {
 		gpuColl = g
 		defer gpuColl.Shutdown()
+		log.Printf("GPU collector initialized")
 	}
 
 	sys := collector.NewSystem(cfg.Host.MountPrefix)
 	ring := store.NewRing(cfg.Sample.HistorySz)
-	sched := store.NewScheduler(sys, gpuColl, ring, cfg.Sample.System)
+	sched := store.NewScheduler(sys, gpuColl, ring, cfg.Sample.System.Duration)
 
 	tg := notify.NewTelegram(cfg.Telegram.BotToken, cfg.Telegram.ChatID)
 	alertEngine := alert.NewEngine(cfg.Alerts, tg)
-	reporter := notify.NewReporter(tg, ring, cfg.Telegram.ReportInterval)
+	reporter := notify.NewReporter(tg, ring, cfg.Telegram.ReportInterval.Duration)
 
 	srv := server.New(ring, cfg.Server.Token)
 

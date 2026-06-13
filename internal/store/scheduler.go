@@ -47,25 +47,52 @@ func (s *Scheduler) AddListener(l Listener) {
 }
 
 func (s *Scheduler) Run(stop <-chan struct{}) {
-	ticker := time.NewTicker(s.interval)
+	interval := s.interval
+	if interval <= 0 {
+		interval = time.Second
+		log.Printf("[scheduler] invalid interval %v, defaulting to 1s", s.interval)
+	}
+	log.Printf("[scheduler] starting, interval=%s", interval)
+	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
+
+	var ticks uint64
+	heartbeat := time.NewTicker(30 * time.Second)
+	defer heartbeat.Stop()
+
 	for {
 		select {
 		case <-stop:
+			log.Printf("[scheduler] stopped after %d ticks", ticks)
 			return
+		case <-heartbeat.C:
+			log.Printf("[scheduler] alive, ticks=%d", ticks)
 		case <-ticker.C:
-			snap := s.collect()
-			if snap == nil {
-				continue
-			}
-			s.ring.Push(snap)
-			s.mu.RLock()
-			ls := make([]Listener, len(s.listeners))
-			copy(ls, s.listeners)
-			s.mu.RUnlock()
-			for _, l := range ls {
-				l(snap)
-			}
+			func() {
+				defer func() {
+					if r := recover(); r != nil {
+						log.Printf("[scheduler] collect panic: %v", r)
+					}
+				}()
+				snap := s.collect()
+				if snap == nil {
+					return
+				}
+				ticks++
+				if ticks == 1 {
+					log.Printf("[scheduler] first snapshot: cpu=%.1f%% mem=%.1f%% disks=%d nets=%d gpus=%d",
+						snap.CPU.UsagePct, snap.Memory.UsedPct,
+						len(snap.Disks), len(snap.Networks), len(snap.GPUs))
+				}
+				s.ring.Push(snap)
+				s.mu.RLock()
+				ls := make([]Listener, len(s.listeners))
+				copy(ls, s.listeners)
+				s.mu.RUnlock()
+				for _, l := range ls {
+					l(snap)
+				}
+			}()
 		}
 	}
 }

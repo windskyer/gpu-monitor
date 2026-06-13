@@ -46,19 +46,19 @@ func (e *Engine) Evaluate(snap *model.Snapshot) {
 	// CPU temperature
 	e.check("cpu_temp", snap.CPU.TempC >= e.cfg.CPUTemp.Threshold,
 		fmt.Sprintf("CPU temperature %.1f°C >= %.0f°C", snap.CPU.TempC, e.cfg.CPUTemp.Threshold),
-		e.cfg.CPUTemp.Cooldown, now)
+		e.cfg.CPUTemp.Cooldown.Duration, now)
 
 	// Memory %
 	e.check("mem_pct", snap.Memory.UsedPct >= e.cfg.MemPct.Threshold,
 		fmt.Sprintf("Memory usage %.1f%% >= %.0f%%", snap.Memory.UsedPct, e.cfg.MemPct.Threshold),
-		e.cfg.MemPct.Cooldown, now)
+		e.cfg.MemPct.Cooldown.Duration, now)
 
 	// Disk %
 	for _, d := range snap.Disks {
 		key := "disk_pct:" + d.Mountpoint
 		e.check(key, d.UsedPct >= e.cfg.DiskPct.Threshold,
 			fmt.Sprintf("Disk %s usage %.1f%% >= %.0f%%", d.Mountpoint, d.UsedPct, e.cfg.DiskPct.Threshold),
-			e.cfg.DiskPct.Cooldown, now)
+			e.cfg.DiskPct.Cooldown.Duration, now)
 	}
 
 	// GPU alerts
@@ -67,7 +67,7 @@ func (e *Engine) Evaluate(snap *model.Snapshot) {
 
 		e.check(prefix+":temp", float64(g.TempC) >= e.cfg.GPUTemp.Threshold,
 			fmt.Sprintf("GPU %d (%s) temperature %d°C >= %.0f°C", g.Index, g.Name, g.TempC, e.cfg.GPUTemp.Threshold),
-			e.cfg.GPUTemp.Cooldown, now)
+			e.cfg.GPUTemp.Cooldown.Duration, now)
 
 		var memPct float64
 		if g.MemTotal > 0 {
@@ -75,7 +75,7 @@ func (e *Engine) Evaluate(snap *model.Snapshot) {
 		}
 		e.check(prefix+":mem", memPct >= e.cfg.GPUMemPct.Threshold,
 			fmt.Sprintf("GPU %d (%s) memory %.1f%% >= %.0f%%", g.Index, g.Name, memPct, e.cfg.GPUMemPct.Threshold),
-			e.cfg.GPUMemPct.Cooldown, now)
+			e.cfg.GPUMemPct.Cooldown.Duration, now)
 	}
 }
 

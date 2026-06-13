@@ -1,11 +1,25 @@
 package config
 
 import (
+	"fmt"
 	"os"
 	"time"
 
 	"gopkg.in/yaml.v3"
 )
+
+// Duration wraps time.Duration so yaml can decode human strings like "1s", "10m".
+type Duration struct{ time.Duration }
+
+func (d *Duration) UnmarshalYAML(value *yaml.Node) error {
+	v := value.Value
+	dur, err := time.ParseDuration(v)
+	if err != nil {
+		return fmt.Errorf("invalid duration %q: %w", v, err)
+	}
+	d.Duration = dur
+	return nil
+}
 
 type Config struct {
 	Server   ServerCfg   `yaml:"server"`
@@ -26,30 +40,30 @@ type HostCfg struct {
 }
 
 type SampleCfg struct {
-	System    time.Duration `yaml:"system"`
-	GPU       time.Duration `yaml:"gpu"`
-	Process   time.Duration `yaml:"process"`
-	HistorySz int           `yaml:"history"`
-	TopN      int           `yaml:"top_n"`
+	System    Duration `yaml:"system"`
+	GPU       Duration `yaml:"gpu"`
+	Process   Duration `yaml:"process"`
+	HistorySz int      `yaml:"history"`
+	TopN      int      `yaml:"top_n"`
 }
 
 type TelegramCfg struct {
-	BotToken       string        `yaml:"bot_token"`
-	ChatID         string        `yaml:"chat_id"`
-	ReportInterval time.Duration `yaml:"report_interval"`
+	BotToken       string   `yaml:"bot_token"`
+	ChatID         string   `yaml:"chat_id"`
+	ReportInterval Duration `yaml:"report_interval"`
 }
 
 type AlertsCfg struct {
-	GPUTemp    AlertRule `yaml:"gpu_temp"`
-	GPUMemPct  AlertRule `yaml:"gpu_mem_pct"`
-	CPUTemp    AlertRule `yaml:"cpu_temp"`
-	MemPct     AlertRule `yaml:"mem_pct"`
-	DiskPct    AlertRule `yaml:"disk_pct"`
+	GPUTemp   AlertRule `yaml:"gpu_temp"`
+	GPUMemPct AlertRule `yaml:"gpu_mem_pct"`
+	CPUTemp   AlertRule `yaml:"cpu_temp"`
+	MemPct    AlertRule `yaml:"mem_pct"`
+	DiskPct   AlertRule `yaml:"disk_pct"`
 }
 
 type AlertRule struct {
-	Threshold float64       `yaml:"threshold"`
-	Cooldown  time.Duration `yaml:"cooldown"`
+	Threshold float64  `yaml:"threshold"`
+	Cooldown  Duration `yaml:"cooldown"`
 }
 
 type ExporterCfg struct {
@@ -74,19 +88,19 @@ func defaults() *Config {
 	return &Config{
 		Server: ServerCfg{Listen: "0.0.0.0:8800", Token: "change-me"},
 		Sample: SampleCfg{
-			System:    time.Second,
-			GPU:       time.Second,
-			Process:   2 * time.Second,
+			System:    Duration{time.Second},
+			GPU:       Duration{time.Second},
+			Process:   Duration{2 * time.Second},
 			HistorySz: 180,
 			TopN:      15,
 		},
-		Telegram: TelegramCfg{ReportInterval: time.Hour},
+		Telegram: TelegramCfg{ReportInterval: Duration{time.Hour}},
 		Alerts: AlertsCfg{
-			GPUTemp:   AlertRule{Threshold: 83, Cooldown: 10 * time.Minute},
-			GPUMemPct: AlertRule{Threshold: 95, Cooldown: 10 * time.Minute},
-			CPUTemp:   AlertRule{Threshold: 85, Cooldown: 10 * time.Minute},
-			MemPct:    AlertRule{Threshold: 90, Cooldown: 10 * time.Minute},
-			DiskPct:   AlertRule{Threshold: 90, Cooldown: 30 * time.Minute},
+			GPUTemp:   AlertRule{Threshold: 83, Cooldown: Duration{10 * time.Minute}},
+			GPUMemPct: AlertRule{Threshold: 95, Cooldown: Duration{10 * time.Minute}},
+			CPUTemp:   AlertRule{Threshold: 85, Cooldown: Duration{10 * time.Minute}},
+			MemPct:    AlertRule{Threshold: 90, Cooldown: Duration{10 * time.Minute}},
+			DiskPct:   AlertRule{Threshold: 90, Cooldown: Duration{30 * time.Minute}},
 		},
 	}
 }

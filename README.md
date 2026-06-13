@@ -54,7 +54,7 @@ cd gpu-monitor
 cp config.yaml.example config.yaml   # 或直接编辑 config.yaml
 
 # 构建并启动（三阶段 Dockerfile：Node 20 → Go 1.25 → debian-slim）
-docker compose up -d
+docker compose up -d --build
 
 # 查看日志
 docker compose logs -f
