@@ -80,7 +80,7 @@ func main() {
 		}
 
 		msg := fmt.Sprintf("🚀 <b>GPU Monitor 已启动</b>\n"+
-			"🖥 监控地址: http://%s\n"+
+			"🖥 监控地址: %s\n"+
 			"💻 CPU: %.1f%%  温度: %.1f°C\n"+
 			"🧠 内存: %.1f%% (%s/%s)\n"+
 			"💽 磁盘: %s\n"+
