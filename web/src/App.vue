@@ -95,10 +95,10 @@ body {
 .lower-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  /* Make rows equal height so panels align vertically */
-  grid-auto-rows: 1fr;
-  align-items: stretch;
+  gap: 6px;
+  /* Let rows size to content to avoid large vertical whitespace */
+  grid-auto-rows: auto;
+  align-items: start;
 }
 
 @media (max-width: 600px) {
@@ -113,10 +113,10 @@ body {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--r);
-  padding: 10px 12px;
+  padding: 8px 10px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   overflow: hidden;
 }
 

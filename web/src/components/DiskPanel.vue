@@ -16,9 +16,9 @@
 </template>
 
 <script setup lang="ts">
-import type { Disk } from '../types'
-import { fmtBytes, fmtBps } from '../utils'
-import ProgressBar from './ProgressBar.vue'
+import type { Disk } from '../types';
+import { fmtBps, fmtBytes } from '../utils';
+import ProgressBar from './ProgressBar.vue';
 
 defineProps<{ disks: Disk[] }>()
 

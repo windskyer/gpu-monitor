@@ -16,7 +16,7 @@
 
     <TimeChart ref="chart"
       :series="[{ color: '#3fb950', fill: true }]"
-      :max="100" :height="72" />
+      :max="100" :height="56" />
   </section>
 </template>
 
@@ -24,8 +24,8 @@
 import { ref, watch } from 'vue'
 import type { MemStats } from '../types'
 import { fmtBytes, pctClass } from '../utils'
-import TimeChart from './TimeChart.vue'
 import ProgressBar from './ProgressBar.vue'
+import TimeChart from './TimeChart.vue'
 
 const props = defineProps<{ mem: MemStats | null }>()
 const chart = ref<InstanceType<typeof TimeChart>>()

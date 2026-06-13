@@ -36,15 +36,15 @@
 
     <TimeChart ref="chart"
       :series="[{ color: '#58a6ff', fill: true }]"
-      :max="100" :height="72" />
+      :max="100" :height="56" />
   </section>
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
-import type { CPUStats } from '../types'
-import { pctClass, tempClass } from '../utils'
-import TimeChart from './TimeChart.vue'
+import { ref, watch } from 'vue';
+import type { CPUStats } from '../types';
+import { pctClass, tempClass } from '../utils';
+import TimeChart from './TimeChart.vue';
 
 const props = defineProps<{ cpu: CPUStats | null }>()
 const chart = ref<InstanceType<typeof TimeChart>>()

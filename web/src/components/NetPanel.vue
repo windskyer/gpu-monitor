@@ -11,7 +11,7 @@
       </div>
       <TimeChart :ref="el => setChart(iface.name, el as ChartInst)"
         :series="[{ color: '#58a6ff', fill: true }, { color: '#bc8cff', fill: false }]"
-        :height="44" />
+        :height="40" />
     </div>
     <span v-if="!nets.length" class="empty">No interfaces</span>
   </section>
