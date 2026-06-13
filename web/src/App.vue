@@ -4,6 +4,17 @@
     :ts="ts"
     :cpu="snap?.cpu" />
 
+  <div v-if="showTokenPrompt" class="token-overlay">
+    <div class="token-box panel">
+      <h3>请输入访问 Token</h3>
+      <input v-model="tokenInput" placeholder="输入 token" />
+      <div class="actions">
+        <button @click="submitToken">进入</button>
+      </div>
+      <p class="hint">Token 会保存在本地存储，用于后续自动登录。</p>
+    </div>
+  </div>
+
   <main class="app">
     <!-- GPU panels -->
     <template v-if="snap?.gpus?.length">
@@ -24,7 +35,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import AppHeader from './components/AppHeader.vue'
 import CPUPanel from './components/CPUPanel.vue'
 import DiskPanel from './components/DiskPanel.vue'
@@ -33,7 +44,15 @@ import MemPanel from './components/MemPanel.vue'
 import NetPanel from './components/NetPanel.vue'
 import { useWS } from './composables/useWS'
 
-const { snap, connected } = useWS()
+const { snap, connected, setToken, clearToken } = useWS()
+
+const tokenInput = ref(localStorage.getItem('gpu_monitor_token') || '')
+const showTokenPrompt = computed(() => !connected.value)
+
+function submitToken() {
+  if (!tokenInput.value) return
+  setToken(tokenInput.value)
+}
 
 const ts = computed(() => snap.value
   ? new Date(snap.value.ts).toLocaleString('zh-CN', { hour12: false })
@@ -119,6 +138,22 @@ body {
   gap: 6px;
   overflow: hidden;
 }
+
+.token-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(5,8,10,0.6);
+  z-index: 60;
+}
+.token-box { width: 420px; max-width: calc(100% - 24px); padding: 16px; }
+.token-box h3 { margin-bottom: 8px; color: var(--text); }
+.token-box input { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid var(--border2); background: var(--raised); color: var(--text); }
+.token-box .actions { margin-top: 8px; display:flex; justify-content:flex-end }
+.token-box button { padding: 8px 12px; border-radius:6px; border:0; background:var(--green); color:#06120a; font-weight:700 }
+.token-box .hint { margin-top:8px; color:var(--dim); font-size:12px }
 
 /* ── Scrollbar ─────────────────────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 6px; height: 6px; }

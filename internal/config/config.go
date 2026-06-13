@@ -33,6 +33,7 @@ type Config struct {
 type ServerCfg struct {
 	Listen string `yaml:"listen"`
 	Domain string `yaml:"domain"`
+	Token  string `yaml:"token"`
 }
 
 type HostCfg struct {

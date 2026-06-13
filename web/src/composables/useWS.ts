@@ -1,12 +1,12 @@
-import { ref, onMounted, onUnmounted } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 import type { Snapshot } from '../types'
 
 export function useWS() {
-  const snap      = ref<Snapshot | null>(null)
+  const snap = ref<Snapshot | null>(null)
   const connected = ref(false)
-  let ws:    WebSocket | null = null
+  let ws: WebSocket | null = null
   let timer: ReturnType<typeof setTimeout> | null = null
-  let delay  = 1000
+  let delay = 1000
   let stopped = false
 
   function scheduleReconnect() {
@@ -18,11 +18,16 @@ export function useWS() {
   function connect() {
     if (stopped) return
     const proto = location.protocol === 'https:' ? 'wss' : 'ws'
-    const url   = `${proto}://${location.host}/ws`
+    const url = `${proto}://${location.host}/ws`
 
     ws = new WebSocket(url)
 
     ws.onopen = () => {
+      // send token as first message if available
+      const token = localStorage.getItem('gpu_monitor_token')
+      if (token) {
+        try { ws?.send(token) } catch { }
+      }
       connected.value = true
       delay = 1000
     }
@@ -40,12 +45,32 @@ export function useWS() {
     }
   }
 
-  onMounted(connect)
+  // start only if token exists; otherwise wait for setToken()
+  onMounted(() => {
+    const token = localStorage.getItem('gpu_monitor_token')
+    if (token) connect()
+  })
   onUnmounted(() => {
     stopped = true
     if (timer !== null) { clearTimeout(timer); timer = null }
     ws?.close()
   })
 
-  return { snap, connected }
+  function setToken(t: string) {
+    localStorage.setItem('gpu_monitor_token', t)
+    // if a socket exists, send token immediately; otherwise connect
+    if (ws) {
+      try { ws.send(t) } catch { /* ignore */ }
+    } else if (!connected.value) {
+      connect()
+    }
+  }
+
+  function clearToken() {
+    localStorage.removeItem('gpu_monitor_token')
+    if (ws) { ws.close(); ws = null }
+    connected.value = false
+  }
+
+  return { snap, connected, setToken, clearToken }
 }

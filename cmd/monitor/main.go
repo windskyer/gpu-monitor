@@ -49,7 +49,7 @@ func main() {
 	alertEngine := alert.NewEngine(cfg.Alerts, tg)
 	reporter := notify.NewReporter(tg, ring, cfg.Telegram.ReportInterval.Duration, cfg.Server.Listen, cfg.Server.Domain)
 
-	srv := server.New(ring)
+	srv := server.New(ring, cfg.Server.Token)
 
 	sched.AddListener(srv.Listener)
 	sched.AddListener(alertEngine.Evaluate)

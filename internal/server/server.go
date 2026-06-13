@@ -58,12 +58,13 @@ func (h *Hub) broadcast(data []byte) {
 
 // Server is the HTTP + WebSocket server.
 type Server struct {
-	ring *store.Ring
-	hub  *Hub
+	ring  *store.Ring
+	hub   *Hub
+	token string
 }
 
-func New(ring *store.Ring) *Server {
-	return &Server{ring: ring, hub: newHub()}
+func New(ring *store.Ring, token string) *Server {
+	return &Server{ring: ring, hub: newHub(), token: token}
 }
 
 // Listener is the store.Listener that feeds the hub.
@@ -81,7 +82,36 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("/ws", s.handleWS)
 	mux.HandleFunc("/api/snapshot", s.handleSnapshot)
 	mux.Handle("/", http.FileServer(http.FS(staticFS)))
-	return mux
+	return s.withMiddleware(mux)
+}
+
+// withMiddleware wraps handler with logging and optional token auth.
+func (s *Server) withMiddleware(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+		// logging: capture status
+		lrw := &loggingResponseWriter{ResponseWriter: w, status: 200}
+		h.ServeHTTP(lrw, r)
+		dur := time.Since(start)
+		log.Printf("[http] %s %s %s %d %dB %v", r.RemoteAddr, r.Method, r.URL.Path, lrw.status, lrw.written, dur)
+	})
+}
+
+type loggingResponseWriter struct {
+	http.ResponseWriter
+	status  int
+	written int
+}
+
+func (l *loggingResponseWriter) WriteHeader(code int) {
+	l.status = code
+	l.ResponseWriter.WriteHeader(code)
+}
+
+func (l *loggingResponseWriter) Write(b []byte) (int, error) {
+	n, err := l.ResponseWriter.Write(b)
+	l.written += n
+	return n, err
 }
 
 func (s *Server) handleWS(w http.ResponseWriter, r *http.Request) {
@@ -90,6 +120,27 @@ func (s *Server) handleWS(w http.ResponseWriter, r *http.Request) {
 		log.Printf("[ws] upgrade error from %s: %v", r.RemoteAddr, err)
 		return
 	}
+	// Expect first message to be token if server.token is set
+	if s.token != "" {
+		conn.SetReadDeadline(time.Now().Add(5 * time.Second))
+		mt, msg, err := conn.ReadMessage()
+		if err != nil {
+			log.Printf("[ws] auth read error from %s: %v", r.RemoteAddr, err)
+			conn.Close()
+			return
+		}
+		// only text messages allowed for auth
+		if mt != websocket.TextMessage || string(msg) != s.token {
+			log.Printf("[ws] auth failed from %s", r.RemoteAddr)
+			// politely close
+			conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.ClosePolicyViolation, "auth failed"))
+			conn.Close()
+			return
+		}
+		// clear deadline after successful auth
+		conn.SetReadDeadline(time.Time{})
+	}
+
 	s.hub.add(conn)
 	log.Printf("[ws] connected: %s", r.RemoteAddr)
 
