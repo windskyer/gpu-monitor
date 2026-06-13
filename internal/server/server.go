@@ -1,8 +1,11 @@
 package server
 
 import (
+	"bufio"
 	"encoding/json"
+	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"sync"
 	"time"
@@ -112,6 +115,14 @@ func (l *loggingResponseWriter) Write(b []byte) (int, error) {
 	n, err := l.ResponseWriter.Write(b)
 	l.written += n
 	return n, err
+}
+
+func (l *loggingResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	h, ok := l.ResponseWriter.(http.Hijacker)
+	if !ok {
+		return nil, nil, fmt.Errorf("ResponseWriter does not support Hijacker")
+	}
+	return h.Hijack()
 }
 
 func (s *Server) handleWS(w http.ResponseWriter, r *http.Request) {
