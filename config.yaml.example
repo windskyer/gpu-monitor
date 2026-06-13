@@ -1,6 +1,5 @@
 server:
   listen: "0.0.0.0:8800"
-  token: "change-me"
 
 host:
   mount_prefix: "/host/root"   # bare metal: ""  |  container: "/host/root"
@@ -13,7 +12,6 @@ sample:
   top_n:   15
 
 telegram:
-  bot_token: ""
   chat_id:   ""
   report_interval: 1h
 

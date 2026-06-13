@@ -58,13 +58,12 @@ func (h *Hub) broadcast(data []byte) {
 
 // Server is the HTTP + WebSocket server.
 type Server struct {
-	ring  *store.Ring
-	hub   *Hub
-	token string
+	ring *store.Ring
+	hub  *Hub
 }
 
-func New(ring *store.Ring, token string) *Server {
-	return &Server{ring: ring, hub: newHub(), token: token}
+func New(ring *store.Ring) *Server {
+	return &Server{ring: ring, hub: newHub()}
 }
 
 // Listener is the store.Listener that feeds the hub.
@@ -86,12 +85,6 @@ func (s *Server) Handler() http.Handler {
 }
 
 func (s *Server) handleWS(w http.ResponseWriter, r *http.Request) {
-	if s.token != "" && s.token != "change-me" {
-		if r.URL.Query().Get("token") != s.token {
-			http.Error(w, "forbidden", http.StatusForbidden)
-			return
-		}
-	}
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Printf("[ws] upgrade error from %s: %v", r.RemoteAddr, err)

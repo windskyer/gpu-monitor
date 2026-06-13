@@ -18,8 +18,7 @@ export function useWS() {
   function connect() {
     if (stopped) return
     const proto = location.protocol === 'https:' ? 'wss' : 'ws'
-    const tok   = new URLSearchParams(location.search).get('token') ?? ''
-    const url   = `${proto}://${location.host}/ws${tok ? '?token=' + encodeURIComponent(tok) : ''}`
+    const url   = `${proto}://${location.host}/ws`
 
     ws = new WebSocket(url)
 

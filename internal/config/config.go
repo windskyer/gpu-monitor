@@ -32,7 +32,6 @@ type Config struct {
 
 type ServerCfg struct {
 	Listen string `yaml:"listen"`
-	Token  string `yaml:"token"`
 }
 
 type HostCfg struct {
@@ -86,7 +85,7 @@ func Load(path string) (*Config, error) {
 
 func defaults() *Config {
 	return &Config{
-		Server: ServerCfg{Listen: "0.0.0.0:8800", Token: "change-me"},
+		Server: ServerCfg{Listen: "0.0.0.0:8800"},
 		Sample: SampleCfg{
 			System:    Duration{time.Second},
 			GPU:       Duration{time.Second},

@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -12,6 +13,7 @@ import (
 	"github.com/windskyer/gpu-monitor/internal/collector"
 	"github.com/windskyer/gpu-monitor/internal/config"
 	"github.com/windskyer/gpu-monitor/internal/gpu"
+	"github.com/windskyer/gpu-monitor/internal/model"
 	"github.com/windskyer/gpu-monitor/internal/notify"
 	"github.com/windskyer/gpu-monitor/internal/server"
 	"github.com/windskyer/gpu-monitor/internal/store"
@@ -46,10 +48,32 @@ func main() {
 	alertEngine := alert.NewEngine(cfg.Alerts, tg)
 	reporter := notify.NewReporter(tg, ring, cfg.Telegram.ReportInterval.Duration)
 
-	srv := server.New(ring, cfg.Server.Token)
+	srv := server.New(ring)
 
 	sched.AddListener(srv.Listener)
 	sched.AddListener(alertEngine.Evaluate)
+
+	// Send startup notification after first snapshot so we have real hw info.
+	var startupSent bool
+	sched.AddListener(func(snap *model.Snapshot) {
+		if startupSent {
+			return
+		}
+		startupSent = true
+		gpuInfo := "无 GPU"
+		if len(snap.GPUs) > 0 {
+			g := snap.GPUs[0]
+			gpuInfo = fmt.Sprintf("%s (显存 %d MB)", g.Name, g.MemTotal/1024/1024)
+		}
+		msg := fmt.Sprintf("🚀 <b>GPU Monitor 已启动</b>\n"+
+			"🖥 监控地址: http://%s\n"+
+			"💻 CPU: %.1f%%  内存: %.1f%%\n"+
+			"🎮 GPU: %s",
+			cfg.Server.Listen, snap.CPU.UsagePct, snap.Memory.UsedPct, gpuInfo)
+		if err := tg.Send(msg); err != nil {
+			log.Printf("[notify] startup message: %v", err)
+		}
+	})
 
 	stop := make(chan struct{})
 	go sched.Run(stop)
