@@ -96,13 +96,17 @@ body {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
-  align-items: start;
+  /* Make rows equal height so panels align vertically */
+  grid-auto-rows: 1fr;
+  align-items: stretch;
 }
 
-.media-fix {}
 @media (max-width: 600px) {
   .lower-grid { grid-template-columns: 1fr; }
 }
+
+/* Ensure direct grid children can shrink/grow properly */
+.lower-grid > * { min-height: 0; }
 
 /* ── Panel base ────────────────────────────────────────────────────────────── */
 .panel {
