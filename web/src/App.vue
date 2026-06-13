@@ -94,10 +94,13 @@ body {
 
 .lower-grid {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: 1fr 1fr;
   gap: 8px;
   align-items: start;
 }
+
+@media (max-width: 600px) {
+  .lower-grid { grid-template-columns: 1fr; }
 
 /* ── Panel base ────────────────────────────────────────────────────────────── */
 .panel {
