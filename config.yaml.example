@@ -12,6 +12,7 @@ sample:
   top_n:   15
 
 telegram:
+  bot_token: ""
   chat_id:   ""
   report_interval: 1h
 
