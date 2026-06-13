@@ -17,10 +17,11 @@ type Reporter struct {
 	ring     *store.Ring
 	interval time.Duration
 	listen   string
+	domain   string
 }
 
-func NewReporter(tg *Telegram, ring *store.Ring, interval time.Duration, listen string) *Reporter {
-	return &Reporter{tg: tg, ring: ring, interval: interval, listen: listen}
+func NewReporter(tg *Telegram, ring *store.Ring, interval time.Duration, listen string, domain string) *Reporter {
+	return &Reporter{tg: tg, ring: ring, interval: interval, listen: listen, domain: domain}
 }
 
 func (r *Reporter) Run(stop <-chan struct{}) {
@@ -46,8 +47,8 @@ func (r *Reporter) send() {
 	}
 	body := formatReport(snap)
 	msg := body
-	if r.listen != "" {
-		msg = fmt.Sprintf("🚀 <b>GPU Monitor</b>\n🖥 监控地址: http://%s\n\n%s", r.listen, body)
+	if r.domain != "" {
+		msg = fmt.Sprintf("🚀 <b>GPU Monitor</b>\n🖥 Monitoring URL: http://%s\n\n%s", r.domain, body)
 	}
 	if err := r.tg.Send(msg); err != nil {
 		log.Printf("[reporter] send: %v", err)

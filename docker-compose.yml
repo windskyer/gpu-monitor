@@ -20,8 +20,8 @@ services:
       TZ: Asia/Shanghai
     volumes:
       - /etc/localtime:/etc/localtime:ro
-      - /proc:/host/proc:ro                 # CPU/内存/网络/挂载信息
-      - /sys:/host/sys:ro                   # hwmon 温度(k10temp 等)
+      - /proc:/host/proc:ro # CPU/内存/网络/挂载信息
+      - /sys:/host/sys:ro # hwmon 温度(k10temp 等)
       - /etc:/host/etc:ro
-      - /:/host/root:ro,rslave              # 磁盘用量(配合 config 的 host.mount_prefix=/host/root)
+      - /:/host/root:ro,rslave # 磁盘用量(配合 config 的 host.mount_prefix=/host/root)
       - ./config.yaml:/etc/gpu-monitor/config.yaml:ro
