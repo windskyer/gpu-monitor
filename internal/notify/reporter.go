@@ -5,6 +5,8 @@ import (
 	"log"
 	"time"
 
+	"strings"
+
 	"github.com/windskyer/gpu-monitor/internal/model"
 	"github.com/windskyer/gpu-monitor/internal/store"
 )
@@ -14,10 +16,11 @@ type Reporter struct {
 	tg       *Telegram
 	ring     *store.Ring
 	interval time.Duration
+	listen   string
 }
 
-func NewReporter(tg *Telegram, ring *store.Ring, interval time.Duration) *Reporter {
-	return &Reporter{tg: tg, ring: ring, interval: interval}
+func NewReporter(tg *Telegram, ring *store.Ring, interval time.Duration, listen string) *Reporter {
+	return &Reporter{tg: tg, ring: ring, interval: interval, listen: listen}
 }
 
 func (r *Reporter) Run(stop <-chan struct{}) {
@@ -41,7 +44,11 @@ func (r *Reporter) send() {
 	if snap == nil {
 		return
 	}
-	msg := formatReport(snap)
+	body := formatReport(snap)
+	msg := body
+	if r.listen != "" {
+		msg = fmt.Sprintf("🚀 <b>GPU Monitor</b>\n🖥 监控地址: http://%s\n\n%s", r.listen, body)
+	}
 	if err := r.tg.Send(msg); err != nil {
 		log.Printf("[reporter] send: %v", err)
 	}
@@ -51,29 +58,55 @@ func formatReport(s *model.Snapshot) string {
 	t := s.Timestamp.Format("2006-01-02 15:04:05")
 	txt := fmt.Sprintf("<b>📊 GPU Monitor Report</b> — %s\n\n", t)
 
-	txt += fmt.Sprintf("<b>CPU</b> %.1f%% | %.1f°C | Load %.2f %.2f %.2f\n",
-		s.CPU.UsagePct, s.CPU.TempC, s.CPU.LoadAvg1, s.CPU.LoadAvg5, s.CPU.LoadAvg15)
+	// include server listen if available (reporter will prefix when called)
+	// CPU
+	txt += fmt.Sprintf("<b>CPU</b> %.1f%% | %.1f°C | Freq %.2f GHz | Load %.2f %.2f %.2f\n",
+		s.CPU.UsagePct, s.CPU.TempC, s.CPU.FreqMHz/1000.0, s.CPU.LoadAvg1, s.CPU.LoadAvg5, s.CPU.LoadAvg15)
 
+	// Memory
 	txt += fmt.Sprintf("<b>Memory</b> %.1f%% (%s / %s)\n",
 		s.Memory.UsedPct, fmtBytes(s.Memory.UsedBytes), fmtBytes(s.Memory.TotalBytes))
 
-	for _, g := range s.GPUs {
-		memPct := 0.0
-		if g.MemTotal > 0 {
-			memPct = float64(g.MemUsed) / float64(g.MemTotal) * 100
+	// Disks
+	if len(s.Disks) > 0 {
+		txt += "\n<b>Disks</b>\n"
+		for _, d := range s.Disks {
+			txt += fmt.Sprintf("- %s: %.1f%% (%s/%s)\n", d.Mountpoint, d.UsedPct, fmtBytes(d.UsedBytes), fmtBytes(d.TotalBytes))
 		}
-		txt += fmt.Sprintf("\n<b>GPU %d</b> %s\n", g.Index, g.Name)
-		txt += fmt.Sprintf("  Util %d%% | Mem %.1f%% (%s/%s) | Temp %d°C | %.0fW\n",
-			g.GPUUtilPct, memPct,
-			fmtBytes(g.MemUsed), fmtBytes(g.MemTotal),
-			g.TempC, g.PowerW)
 	}
 
-	for _, d := range s.Disks {
-		txt += fmt.Sprintf("<b>Disk</b> %s %.1f%% (%s/%s)\n",
-			d.Mountpoint, d.UsedPct, fmtBytes(d.UsedBytes), fmtBytes(d.TotalBytes))
+	// Networks
+	if len(s.Networks) > 0 {
+		txt += "\n<b>Network</b>\n"
+		for _, n := range s.Networks {
+			txt += fmt.Sprintf("- %s: ↓ %s ↑ %s\n", n.Name, fmtBps(n.RecvBps), fmtBps(n.SendBps))
+		}
 	}
+
+	// GPUs
+	if len(s.GPUs) > 0 {
+		txt += "\n<b>GPUs</b>\n"
+		for _, g := range s.GPUs {
+			memPct := 0.0
+			if g.MemTotal > 0 {
+				memPct = float64(g.MemUsed) / float64(g.MemTotal) * 100
+			}
+			// escape name to avoid accidental HTML
+			name := escHTML(g.Name)
+			txt += fmt.Sprintf("- %s: Util %d%% | Mem %.1f%% (%s/%s) | Temp %d°C | %.0fW\n",
+				name, g.GPUUtilPct, memPct, fmtBytes(g.MemUsed), fmtBytes(g.MemTotal), g.TempC, g.PowerW)
+		}
+	}
+
 	return txt
+}
+
+// escHTML escapes < and > to avoid injecting raw tags in parse_mode=HTML
+func escHTML(s string) string {
+	out := s
+	out = strings.ReplaceAll(out, "<", "&lt;")
+	out = strings.ReplaceAll(out, ">", "&gt;")
+	return out
 }
 
 func fmtBytes(b uint64) string {
@@ -96,3 +129,19 @@ func fmtBytes(b uint64) string {
 
 // FmtBytes is exported for server use.
 func FmtBytes(b uint64) string { return fmtBytes(b) }
+
+func fmtBps(b float64) string {
+	if b < 0 {
+		b = 0
+	}
+	switch {
+	case b >= 1e9:
+		return fmt.Sprintf("%.2f GB/s", b/1e9)
+	case b >= 1e6:
+		return fmt.Sprintf("%.1f MB/s", b/1e6)
+	case b >= 1e3:
+		return fmt.Sprintf("%.0f KB/s", b/1e3)
+	default:
+		return fmt.Sprintf("%.0f B/s", b)
+	}
+}

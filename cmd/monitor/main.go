@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	"github.com/windskyer/gpu-monitor/internal/alert"
@@ -46,7 +47,7 @@ func main() {
 
 	tg := notify.NewTelegram(cfg.Telegram.BotToken, cfg.Telegram.ChatID)
 	alertEngine := alert.NewEngine(cfg.Alerts, tg)
-	reporter := notify.NewReporter(tg, ring, cfg.Telegram.ReportInterval.Duration)
+	reporter := notify.NewReporter(tg, ring, cfg.Telegram.ReportInterval.Duration, cfg.Server.Listen)
 
 	srv := server.New(ring)
 
@@ -63,13 +64,30 @@ func main() {
 		gpuInfo := "无 GPU"
 		if len(snap.GPUs) > 0 {
 			g := snap.GPUs[0]
-			gpuInfo = fmt.Sprintf("%s (显存 %d MB)", g.Name, g.MemTotal/1024/1024)
+			gpuInfo = fmt.Sprintf("%s (显存 %d MB, 温度 %d°C)", g.Name, g.MemTotal/1024/1024, g.TempC)
 		}
+		// gather disk summary (top 2)
+		diskStr := "无磁盘信息"
+		if len(snap.Disks) > 0 {
+			parts := []string{}
+			for i, d := range snap.Disks {
+				if i >= 2 {
+					break
+				}
+				parts = append(parts, fmt.Sprintf("%s: %.1f%%", d.Mountpoint, d.UsedPct))
+			}
+			diskStr = strings.Join(parts, "; ")
+		}
+
 		msg := fmt.Sprintf("🚀 <b>GPU Monitor 已启动</b>\n"+
 			"🖥 监控地址: http://%s\n"+
-			"💻 CPU: %.1f%%  内存: %.1f%%\n"+
+			"💻 CPU: %.1f%%  温度: %.1f°C\n"+
+			"🧠 内存: %.1f%% (%s/%s)\n"+
+			"💽 磁盘: %s\n"+
 			"🎮 GPU: %s",
-			cfg.Server.Listen, snap.CPU.UsagePct, snap.Memory.UsedPct, gpuInfo)
+			cfg.Server.Listen, snap.CPU.UsagePct, snap.CPU.TempC,
+			snap.Memory.UsedPct, notify.FmtBytes(snap.Memory.UsedBytes), notify.FmtBytes(snap.Memory.TotalBytes),
+			diskStr, gpuInfo)
 		if err := tg.Send(msg); err != nil {
 			log.Printf("[notify] startup message: %v", err)
 		}
