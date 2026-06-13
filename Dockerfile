@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # ── 阶段 1: 前端构建 ──────────────────────────────────────────────────────────
-FROM node:20-slim AS frontend
+FROM node:22-slim AS frontend
 WORKDIR /web
 COPY web/package*.json ./
 RUN npm ci --prefer-offline
@@ -27,8 +27,8 @@ RUN go build -trimpath -ldflags="-s -w" -o /out/gpu-monitor ./cmd/monitor
 # CGO 动态二进制 → 必须 glibc 基础镜像（不能用 alpine/scratch）
 FROM debian:bookworm-slim
 RUN apt-get update \
- && apt-get install -y --no-install-recommends ca-certificates tzdata \
- && rm -rf /var/lib/apt/lists/*
+    && apt-get install -y --no-install-recommends ca-certificates tzdata \
+    && rm -rf /var/lib/apt/lists/*
 COPY --from=builder /out/gpu-monitor /usr/local/bin/gpu-monitor
 EXPOSE 8800
 ENTRYPOINT ["/usr/local/bin/gpu-monitor"]
