@@ -2,13 +2,17 @@
   <section class="panel">
     <div class="panel-hdr">
       <span class="panel-title">Memory</span>
-      <span class="panel-sub" :class="pctClass(mem.used_pct)">{{ mem.used_pct.toFixed(1) }}%</span>
+      <span class="panel-sub" :class="mem ? pctClass(mem.used_pct) : ''">
+        {{ mem ? mem.used_pct.toFixed(1) + '%' : '–' }}
+      </span>
     </div>
 
-    <ProgressBar label="RAM" :value="mem.used_pct"
-      :right="`${fmtBytes(mem.used)} / ${fmtBytes(mem.total)}`" />
-    <ProgressBar v-if="mem.swap_total > 0" label="Swap" :value="mem.swap_pct"
-      :right="`${fmtBytes(mem.swap_used)} / ${fmtBytes(mem.swap_total)}`" />
+    <template v-if="mem">
+      <ProgressBar label="RAM" :value="mem.used_pct"
+        :right="`${fmtBytes(mem.used)} / ${fmtBytes(mem.total)}`" />
+      <ProgressBar v-if="mem.swap_total > 0" label="Swap" :value="mem.swap_pct"
+        :right="`${fmtBytes(mem.swap_used)} / ${fmtBytes(mem.swap_total)}`" />
+    </template>
 
     <TimeChart ref="chart"
       :series="[{ color: '#3fb950', fill: true }]"
@@ -23,10 +27,10 @@ import { fmtBytes, pctClass } from '../utils'
 import TimeChart from './TimeChart.vue'
 import ProgressBar from './ProgressBar.vue'
 
-const props = defineProps<{ mem: MemStats }>()
+const props = defineProps<{ mem: MemStats | null }>()
 const chart = ref<InstanceType<typeof TimeChart>>()
 
-watch(() => props.mem.used_pct, v => chart.value?.push(v))
+watch(() => props.mem?.used_pct, v => { if (v != null) chart.value?.push(v) })
 </script>
 
 <style scoped>

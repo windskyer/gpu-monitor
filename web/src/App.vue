@@ -9,11 +9,14 @@
     <template v-if="snap?.gpus?.length">
       <GPUPanel v-for="g in snap.gpus" :key="g.index" :g="g" />
     </template>
+    <div v-else class="panel no-gpu">
+      {{ connected ? 'No GPUs detected' : 'Connecting…' }}
+    </div>
 
     <!-- System row -->
     <div class="lower-grid">
-      <CPUPanel v-if="snap?.cpu" :cpu="snap.cpu" />
-      <MemPanel v-if="snap?.mem" :mem="snap.mem" />
+      <CPUPanel :cpu="snap?.cpu ?? null" />
+      <MemPanel :mem="snap?.mem ?? null" />
       <NetPanel :nets="snap?.networks ?? []" />
       <DiskPanel :disks="snap?.disks ?? []" />
     </div>
@@ -81,6 +84,13 @@ body {
 
 /* ── Layout ────────────────────────────────────────────────────────────────── */
 .app { display: flex; flex-direction: column; gap: 8px; padding: 8px; }
+
+.no-gpu {
+  color: var(--dim);
+  font-size: 12px;
+  text-align: center;
+  padding: 20px;
+}
 
 .lower-grid {
   display: grid;
