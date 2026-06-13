@@ -25,13 +25,13 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useWS } from './composables/useWS'
 import AppHeader from './components/AppHeader.vue'
-import GPUPanel  from './components/GPUPanel.vue'
-import CPUPanel  from './components/CPUPanel.vue'
-import MemPanel  from './components/MemPanel.vue'
-import NetPanel  from './components/NetPanel.vue'
+import CPUPanel from './components/CPUPanel.vue'
 import DiskPanel from './components/DiskPanel.vue'
+import GPUPanel from './components/GPUPanel.vue'
+import MemPanel from './components/MemPanel.vue'
+import NetPanel from './components/NetPanel.vue'
+import { useWS } from './composables/useWS'
 
 const { snap, connected } = useWS()
 
@@ -99,8 +99,10 @@ body {
   align-items: start;
 }
 
+.media-fix {}
 @media (max-width: 600px) {
   .lower-grid { grid-template-columns: 1fr; }
+}
 
 /* ── Panel base ────────────────────────────────────────────────────────────── */
 .panel {
