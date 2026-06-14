@@ -48,10 +48,11 @@ if (urlToken) localStorage.setItem('gpu_monitor_token', urlToken)
 const { snap, connected, setToken } = useWS()
 
 const tokenInput = ref(localStorage.getItem('gpu_monitor_token') || '')
-const showTokenPrompt = computed(() => !connected.value)
+const showTokenPrompt = computed(() => !tokenInput.value.trim())
 
 function submitToken() {
   if (!tokenInput.value) return
+  tokenInput.value = tokenInput.value.trim()
   setToken(tokenInput.value)
 }
 
