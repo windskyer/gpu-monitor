@@ -5,6 +5,11 @@ export interface Snapshot {
   disks:    Disk[]    | null
   networks: NetIface[] | null
   gpus:     GPU[]     | null
+  ui?:      UIConfig
+}
+
+export interface UIConfig {
+  network_url?: string
 }
 
 export interface CPUStats {

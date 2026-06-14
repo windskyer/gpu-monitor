@@ -26,7 +26,7 @@
     <div class="lower-grid">
       <CPUPanel :cpu="snap?.cpu ?? null" />
       <MemPanel :mem="snap?.mem ?? null" />
-      <NetPanel :nets="snap?.networks ?? []" />
+      <NetPanel :nets="snap?.networks ?? []" :link="snap?.ui?.network_url" />
       <DiskPanel :disks="snap?.disks ?? []" />
     </div>
   </main>

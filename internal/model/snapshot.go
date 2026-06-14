@@ -3,12 +3,17 @@ package model
 import "time"
 
 type Snapshot struct {
-	Timestamp time.Time `json:"ts"`
-	CPU       CPUStats  `json:"cpu"`
-	Memory    MemStats  `json:"mem"`
-	Disks     []Disk    `json:"disks"`
+	Timestamp time.Time  `json:"ts"`
+	CPU       CPUStats   `json:"cpu"`
+	Memory    MemStats   `json:"mem"`
+	Disks     []Disk     `json:"disks"`
 	Networks  []NetIface `json:"networks"`
-	GPUs      []GPU     `json:"gpus"`
+	GPUs      []GPU      `json:"gpus"`
+	UI        *UIConfig  `json:"ui,omitempty"`
+}
+
+type UIConfig struct {
+	NetworkURL string `json:"network_url,omitempty"`
 }
 
 type CPUStats struct {
@@ -54,9 +59,9 @@ type NetIface struct {
 }
 
 type GPU struct {
-	Index      int    `json:"index"`
-	Name       string `json:"name"`
-	UUID       string `json:"uuid"`
+	Index int    `json:"index"`
+	Name  string `json:"name"`
+	UUID  string `json:"uuid"`
 
 	// Utilization
 	GPUUtilPct uint32 `json:"gpu_util_pct"`
@@ -73,7 +78,7 @@ type GPU struct {
 	TempC uint32 `json:"temp_c"`
 
 	// Power (W)
-	PowerW     float64 `json:"power_w"`
+	PowerW      float64 `json:"power_w"`
 	PowerLimitW float64 `json:"power_limit_w"`
 
 	// Fan (%)
@@ -85,10 +90,10 @@ type GPU struct {
 	ClockMemMHz      uint32 `json:"clock_mem_mhz"`
 
 	// PCIe
-	PCIeGen       int     `json:"pcie_gen"`
-	PCIeWidth     int     `json:"pcie_width"`
-	PCIeTxBps     float64 `json:"pcie_tx_bps"`
-	PCIeRxBps     float64 `json:"pcie_rx_bps"`
+	PCIeGen   int     `json:"pcie_gen"`
+	PCIeWidth int     `json:"pcie_width"`
+	PCIeTxBps float64 `json:"pcie_tx_bps"`
+	PCIeRxBps float64 `json:"pcie_rx_bps"`
 
 	// Throttle reasons (bit mask decoded to human string list)
 	ThrottleReasons []string `json:"throttle_reasons,omitempty"`

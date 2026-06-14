@@ -75,7 +75,9 @@ http://localhost:8800
 ```yaml
 server:
   listen: "0.0.0.0:8800"
+  domain: "https://home.flftuu.com/gpu"
   token: "change-me"         # 留空则不鉴权
+  network_url: "https://home.flftuu.com/ui/"
 
 host:
   mount_prefix: "/host/root" # 容器模式；裸机部署填 ""

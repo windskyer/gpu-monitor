@@ -61,17 +61,20 @@ func (h *Hub) broadcast(data []byte) {
 
 // Server is the HTTP + WebSocket server.
 type Server struct {
-	ring  *store.Ring
-	hub   *Hub
+	ring *store.Ring
+	hub  *Hub
+
 	token string
+	ui    model.UIConfig
 }
 
-func New(ring *store.Ring, token string) *Server {
-	return &Server{ring: ring, hub: newHub(), token: token}
+func New(ring *store.Ring, token string, ui model.UIConfig) *Server {
+	return &Server{ring: ring, hub: newHub(), token: token, ui: ui}
 }
 
 // Listener is the store.Listener that feeds the hub.
 func (s *Server) Listener(snap *model.Snapshot) {
+	s.decorateSnapshot(snap)
 	data, err := json.Marshal(snap)
 	if err != nil {
 		log.Printf("[server] marshal: %v", err)
@@ -172,6 +175,15 @@ func (s *Server) handleSnapshot(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "no data", http.StatusServiceUnavailable)
 		return
 	}
+	s.decorateSnapshot(snap)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(snap)
+}
+
+func (s *Server) decorateSnapshot(snap *model.Snapshot) {
+	if s.ui.NetworkURL == "" {
+		snap.UI = nil
+		return
+	}
+	snap.UI = &s.ui
 }
