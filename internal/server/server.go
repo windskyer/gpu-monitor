@@ -84,7 +84,7 @@ func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/gpu/ws", s.handleWS)
 	mux.HandleFunc("/gpu/api/snapshot", s.handleSnapshot)
-	mux.Handle("/gpu/", http.FileServer(http.FS(staticFS)))
+	mux.Handle("/gpu", http.FileServer(http.FS(staticFS)))
 	return s.withMiddleware(mux)
 }
 
