@@ -19,16 +19,13 @@ export function useWS() {
     if (stopped) return
     const proto = location.protocol === 'https:' ? 'wss' : 'ws'
     const base = import.meta.env.BASE_URL.replace(/\/$/, '')
-    const url = `${proto}://${location.host}${base}/ws`
+    const token = localStorage.getItem('gpu_monitor_token')
+    const qs = token ? `?token=${encodeURIComponent(token)}` : ''
+    const url = `${proto}://${location.host}${base}/ws${qs}`
 
     ws = new WebSocket(url)
 
     ws.onopen = () => {
-      // send token as first message if available
-      const token = localStorage.getItem('gpu_monitor_token')
-      if (token) {
-        try { ws?.send(token) } catch { }
-      }
       connected.value = true
       delay = 1000
     }
@@ -59,12 +56,11 @@ export function useWS() {
 
   function setToken(t: string) {
     localStorage.setItem('gpu_monitor_token', t)
-    // if a socket exists, send token immediately; otherwise connect
     if (ws) {
-      try { ws.send(t) } catch { /* ignore */ }
-    } else if (!connected.value) {
-      connect()
+      ws.close()
+      ws = null
     }
+    connect()
   }
 
   function clearToken() {

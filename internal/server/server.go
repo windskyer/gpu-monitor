@@ -129,30 +129,16 @@ func (l *loggingResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 }
 
 func (s *Server) handleWS(w http.ResponseWriter, r *http.Request) {
+	if s.token != "" && r.URL.Query().Get("token") != s.token {
+		log.Printf("[ws] auth failed from %s", r.RemoteAddr)
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Printf("[ws] upgrade error from %s: %v", r.RemoteAddr, err)
 		return
-	}
-	// Expect first message to be token if server.token is set
-	if s.token != "" {
-		conn.SetReadDeadline(time.Now().Add(5 * time.Second))
-		mt, msg, err := conn.ReadMessage()
-		if err != nil {
-			log.Printf("[ws] auth read error from %s: %v", r.RemoteAddr, err)
-			conn.Close()
-			return
-		}
-		// only text messages allowed for auth
-		if mt != websocket.TextMessage || string(msg) != s.token {
-			log.Printf("[ws] auth failed from %s", r.RemoteAddr)
-			// politely close
-			conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.ClosePolicyViolation, "auth failed"))
-			conn.Close()
-			return
-		}
-		// clear deadline after successful auth
-		conn.SetReadDeadline(time.Time{})
 	}
 
 	s.hub.add(conn)

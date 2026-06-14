@@ -4,18 +4,16 @@
     :ts="ts"
     :cpu="snap?.cpu" />
 
-  <div v-if="showTokenPrompt" class="token-overlay">
-    <div class="token-box panel">
+  <main class="app">
+    <div v-if="showTokenPrompt" class="token-box panel token-inline">
       <h3>请输入访问 Token</h3>
       <input v-model="tokenInput" placeholder="输入 token" />
       <div class="actions">
         <button @click="submitToken">进入</button>
       </div>
-      <p class="hint">Token 会保存在本地存储，用于后续自动登录。</p>
+      <p class="hint">Token 只用于 WebSocket 实时连接。</p>
     </div>
-  </div>
 
-  <main class="app">
     <!-- GPU panels -->
     <template v-if="snap?.gpus?.length">
       <GPUPanel v-for="g in snap.gpus" :key="g.index" :g="g" />
@@ -44,7 +42,10 @@ import MemPanel from './components/MemPanel.vue'
 import NetPanel from './components/NetPanel.vue'
 import { useWS } from './composables/useWS'
 
-const { snap, connected, setToken, clearToken } = useWS()
+const urlToken = new URLSearchParams(location.search).get('token')
+if (urlToken) localStorage.setItem('gpu_monitor_token', urlToken)
+
+const { snap, connected, setToken } = useWS()
 
 const tokenInput = ref(localStorage.getItem('gpu_monitor_token') || '')
 const showTokenPrompt = computed(() => !connected.value)
@@ -139,16 +140,8 @@ body {
   overflow: hidden;
 }
 
-.token-overlay {
-  position: fixed;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(5,8,10,0.6);
-  z-index: 60;
-}
 .token-box { width: 420px; max-width: calc(100% - 24px); padding: 16px; }
+.token-inline { margin: 0 auto; }
 .token-box h3 { margin-bottom: 8px; color: var(--text); }
 .token-box input { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid var(--border2); background: var(--raised); color: var(--text); }
 .token-box .actions { margin-top: 8px; display:flex; justify-content:flex-end }
