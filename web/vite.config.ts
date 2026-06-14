@@ -9,6 +9,8 @@ export default defineConfig({
     port: 5173,
     proxy: {
       // dev 时把 WS 和 API 代理到 Go 后端
+      '/gpu/ws':  { target: 'ws://localhost:8800',   ws: true,         changeOrigin: true },
+      '/gpu/api': { target: 'http://localhost:8800',                   changeOrigin: true },
       '/ws':  { target: 'ws://localhost:8800',   ws: true,         changeOrigin: true },
       '/api': { target: 'http://localhost:8800',                   changeOrigin: true },
     },

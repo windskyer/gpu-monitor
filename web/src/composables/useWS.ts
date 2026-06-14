@@ -18,7 +18,8 @@ export function useWS() {
   function connect() {
     if (stopped) return
     const proto = location.protocol === 'https:' ? 'wss' : 'ws'
-    const url = `${proto}://${location.host}/ws`
+    const base = import.meta.env.BASE_URL.replace(/\/$/, '')
+    const url = `${proto}://${location.host}${base}/ws`
 
     ws = new WebSocket(url)
 
